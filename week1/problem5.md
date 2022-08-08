@@ -377,7 +377,7 @@ LRUCache *lRUCacheCreate(int capacity)
 void lRUCacheFree(LRUCache *obj)
 {       
     LRUNode *lru, *n;
-    MMM1 (lru, n, &obj->dhead, dlink) {  // list_for_each_entry_safe
+    MMM1 (lru, n, &obj->dhead, dlink) {  // list_for_each_entry_safe_continue 
         list_del(&lru->dlink);
         free(lru);
     }
@@ -388,7 +388,7 @@ int lRUCacheGet(LRUCache *obj, int key)
 {
     LRUNode *lru;
     int hash = key % obj->capacity;
-    MMM2 (lru, &obj->hheads[hash], hlink) {
+    MMM2 (lru, &obj->hheads[hash], hlink) { // list_for_each_entry
         if (lru->key == key) {
             list_move(&lru->dlink, &obj->dhead);
             return lru->value;
@@ -401,7 +401,7 @@ void lRUCachePut(LRUCache *obj, int key, int value)
 {
     LRUNode *lru;
     int hash = key % obj->capacity;
-    MMM3 (lru, &obj->hheads[hash], hlink) {
+    MMM3 (lru, &obj->hheads[hash], hlink) { // list_for_each_entry
         if (lru->key == key) {
             list_move(&lru->dlink, &obj->dhead);
             lru->value = value;
@@ -410,7 +410,7 @@ void lRUCachePut(LRUCache *obj, int key, int value)
     }
 
     if (obj->count == obj->capacity) {
-        lru = MMM4(&obj->dhead, LRUNode, dlink);
+        lru = MMM4(&obj->dhead, LRUNode, dlink); // list_last_entry
         list_del(&lru->dlink);
         list_del(&lru->hlink);
     } else {
@@ -434,7 +434,7 @@ MMM1, MMM2, MMM3, MMM4 都是 Linux 核心風格的 list 巨集，以 list_ 開�
 在 Linux 核心找出 LRU 相關程式碼並探討
 測驗 4
 針對 LeetCode 128. Longest Consecutive Sequence，以下是可能的合法 C 程式實作:
-
+```c
 #include <stdio.h>
 #include <stdlib.h>
 #include "list.h"
@@ -484,11 +484,21 @@ int longestConsecutive(int *nums, int n_size)
 
             int left = num, right = num;
             while ((node = find(LLL, n_size, heads))) {
+//(a) left
+//(b) left++
+//(c) ++left
+//(d) left--
+(e) --left
                 len++;
                 list_del(&node->link);
             }
 
             while ((node = find(RRR, n_size, heads))) {
+//(a) right
+//(b) right++
+(c) ++right
+//(d) right--
+//(e) --right
                 len++;
                 list_del(&node->link);
             }
@@ -499,6 +509,7 @@ int longestConsecutive(int *nums, int n_size)
 
     return length;
 }
+```
 請補完程式碼
 
 LLL = ?
